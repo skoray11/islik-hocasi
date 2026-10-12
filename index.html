@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Islık Hocası</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236c8cff'/%3E%3Cpath d='M5 18c3-8 5-8 7 0s4 8 7 0 4-8 8 0' fill='none' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-mode="tuner" data-practice="step">
+
+<header class="topbar">
+  <div class="brand"><span class="logo">〰</span><span>Islık Hocası</span></div>
+  <nav class="tabs">
+    <button class="tab active" data-mode="tuner">Akort</button>
+    <button class="tab" data-mode="song">Şarkı Çalış</button>
+  </nav>
+  <button class="icon-btn" id="settingsBtn" title="Ayarlar" aria-label="Ayarlar">⚙</button>
+</header>
+
+<main>
+  <section class="stage">
+    <div class="card meter-card" id="meterCard" data-state="idle">
+      <div class="target-line song-only">Hedef nota</div>
+      <div class="note-wrap">
+        <svg class="hold-ring" viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="ring-bg" cx="60" cy="60" r="54"/>
+          <circle class="ring-fg" id="ringFg" cx="60" cy="60" r="54"/>
+        </svg>
+        <div class="note-big"><span id="noteName">–</span><span class="oct" id="noteOct"></span></div>
+      </div>
+      <svg class="gauge" id="gauge" viewBox="0 0 300 168" aria-hidden="true"></svg>
+      <div class="readout"><span id="readLeft">— Hz</span><span id="readRight">— ¢</span></div>
+      <div class="hint" id="hint">Mikrofonu başlat</div>
+    </div>
+
+    <div class="card side-card tuner-only">
+      <h2>Ses aralığın</h2>
+      <div class="range-out" id="rangeOut">Henüz ölçülmedi</div>
+      <p class="muted">En pes ve en tiz ıslığını birer saniye kadar tut; aralığın otomatik kaydedilir. Şarkı modunda tonu buna göre ayarlayabilirsin.</p>
+      <button class="btn ghost small" id="rangeReset">Aralığı sıfırla</button>
+      <h2>İpuçları</h2>
+      <ul class="tips">
+        <li>Yeşil bölge = doğru nota. İbre sağdaysa <b>tizsin</b>, soldaysa <b>pessin</b>.</li>
+        <li>Notayı sabit tutmaya çalış; halka dolunca nota “kilitlenir”.</li>
+        <li>Önce “Üç nota” ve gam alıştırmalarıyla başla, sonra şarkılara geç.</li>
+        <li>Referans sesleri hoparlörden çalarken dinleme duraklar. Kulaklık takarsan bu gerekmez.</li>
+      </ul>
+    </div>
+
+    <div class="card side-card song-only">
+      <label class="field">
+        <span>Şarkı</span>
+        <select id="songSelect"></select>
+      </label>
+      <div class="row">
+        <button class="btn ghost small" id="addSongBtn">+ Kendi şarkını ekle</button>
+        <button class="btn ghost small danger" id="delSongBtn" hidden>Şarkıyı sil</button>
+      </div>
+
+      <div class="field">
+        <span>Ton <small class="muted">(yarım ton kaydır)</small></span>
+        <div class="row">
+          <div class="stepper">
+            <button id="keyDown" aria-label="Tonu indir">−</button>
+            <output id="keyOut">0</output>
+            <button id="keyUp" aria-label="Tonu yükselt">+</button>
+          </div>
+          <button class="btn ghost small" id="keyFromMe" title="Bir nota ıslıkla; şarkı o notadan başlayacak şekilde kaydırılır">İlk notamdan</button>
+          <button class="btn ghost small" id="keyFit" title="Ölçtüğün ses aralığına sığdır">Aralığıma uydur</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <span>Çalışma şekli</span>
+        <div class="seg" id="practiceSeg">
+          <button data-practice="step">Adım adım</button>
+          <button data-practice="tempo">Ritimli</button>
+        </div>
+        <small class="muted practice-help step-only">Her notayı doğru tutana kadar bekler. Melodiyi öğrenmek için.</small>
+        <small class="muted practice-help tempo-only">Notalar zamanla akar; ne kadar süre doğru notada kaldığın puanlanır.</small>
+      </div>
+
+      <label class="field tempo-only">
+        <span>Tempo: <output id="bpmOut">90</output> BPM</span>
+        <input type="range" id="bpm" min="40" max="160" step="5" value="90">
+      </label>
+
+      <div class="row actions">
+        <button class="btn primary" id="startBtn">▶ Başla</button>
+        <button class="btn" id="listenBtn">🔊 Melodiyi dinle</button>
+        <button class="btn" id="refBtn" title="Kısayol: N">🎵 Notayı dinle</button>
+      </div>
+      <div class="best muted" id="bestOut"></div>
+    </div>
+  </section>
+
+  <section class="card roll-card" id="rollCard">
+    <canvas id="roll"></canvas>
+    <div class="countdown" id="countdown" hidden></div>
+  </section>
+
+  <section class="chips song-only" id="chips" aria-label="Şarkının notaları"></section>
+</main>
+
+<footer class="statusbar">
+  <span class="mic-dot" id="micDot"></span>
+  <span id="statusText">Mikrofon kapalı</span>
+  <div class="level" title="Giriş seviyesi — çizgi, ıslığın algılanması için gereken eşik">
+    <div class="level-fill" id="levelFill"></div>
+    <div class="level-gate" id="levelGate"></div>
+  </div>
+  <span class="muted keys">Boşluk: başla/durdur · N: notayı dinle</span>
+</footer>
+
+<div class="overlay" id="startOverlay">
+  <div class="overlay-card">
+    <div class="logo-big">〰</div>
+    <h1>Islık Hocası</h1>
+    <p>Islık çal, doğru notada olup olmadığını anında gör. Şarkıları adım adım ya da ritimle çalış.</p>
+    <button class="btn primary big" id="micBtn">🎤 Mikrofonu başlat</button>
+    <p class="error" id="micError" hidden></p>
+    <p class="muted small">Ses bilgisayarından dışarı çıkmaz; tüm analiz tarayıcıda yapılır.</p>
+  </div>
+</div>
+
+<dialog id="settingsDlg">
+  <form method="dialog" class="dlg">
+    <h2>Ayarlar</h2>
+    <label class="field">
+      <span>Nota isimleri</span>
+      <select id="setNaming">
+        <option value="solfege">Do Re Mi</option>
+        <option value="letter">C D E</option>
+      </select>
+    </label>
+    <label class="field">
+      <span>Tolerans: ±<output id="tolOut"></output> cent</span>
+      <input type="range" id="setTol" min="10" max="50" step="5">
+      <small class="muted">Doğru sayılmak için notaya ne kadar yakın olman gerektiği (100 cent = yarım ton). Başlangıç için 25–35 iyidir.</small>
+    </label>
+    <label class="field">
+      <span>Tutma süresi: <output id="holdOut"></output> ms</span>
+      <input type="range" id="setHold" min="150" max="1500" step="50">
+      <small class="muted">Adım adım modda notayı ne kadar tutman gerektiği.</small>
+    </label>
+    <label class="field">
+      <span>Mikrofon eşiği: <output id="gateOut"></output> dB</span>
+      <input type="range" id="setGate" min="-75" max="-25" step="1">
+      <small class="muted">Ortam gürültülüyse yükselt, ıslığın algılanmıyorsa düşür. Alttaki seviye çubuğundaki çizgi bu eşiktir.</small>
+    </label>
+    <label class="check"><input type="checkbox" id="setOctave"><span>Oktav fark etmesin <small class="muted">— notayı bir oktav tiz ya da pes çalman da doğru sayılır</small></span></label>
+    <label class="check"><input type="checkbox" id="setHeadphones"><span>Kulaklık takıyorum <small class="muted">— referans sesler çalarken dinleme durmaz</small></span></label>
+    <label class="check"><input type="checkbox" id="setRefBefore"><span>Adım adım modda her notayı önce çal</span></label>
+    <label class="check"><input type="checkbox" id="setAccompany"><span>Ritimli modda melodiyi eşlik olarak çal <small class="muted">— kulaklık gerekir</small></span></label>
+    <label class="field inline">
+      <span>La (A4) referansı</span>
+      <span><input type="number" id="setA4" min="415" max="466" step="1"> Hz</span>
+    </label>
+    <menu><button class="btn primary" value="ok">Tamam</button></menu>
+  </form>
+</dialog>
+
+<dialog id="songDlg">
+  <form method="dialog" class="dlg" id="songForm">
+    <h2>Kendi şarkını ekle</h2>
+    <label class="field">
+      <span>Şarkının adı</span>
+      <input id="songName" maxlength="40" placeholder="Örn. Üsküdar'a Gider İken">
+    </label>
+    <label class="field">
+      <span>Notalar</span>
+      <textarea id="songText" rows="5" spellcheck="false" placeholder="Do5 Re5 Mi5 Do5 | Mi5 Fa5 Sol5:2"></textarea>
+    </label>
+    <div class="help muted">
+      Notaları boşlukla ayır: <code>Do5</code> ya da <code>C5</code>. Diyez <code>#</code>, bemol <code>b</code>
+      (<code>Fa#5</code>, <code>Sib4</code>). Süre iki noktayla: <code>Sol5:2</code> iki vuruş, <code>Mi5:0.5</code> yarım vuruş.
+      Oktavı yazmazsan bir öncekinin oktavı kullanılır. Es için <code>-</code> ya da <code>es</code>. <code>|</code> yok sayılır.
+    </div>
+    <label class="field inline">
+      <span>Tempo</span>
+      <span><input type="number" id="songBpm" value="90" min="40" max="200"> BPM</span>
+    </label>
+    <div class="parse-out" id="parseOut"></div>
+    <menu>
+      <button class="btn" value="cancel" formnovalidate>Vazgeç</button>
+      <button type="button" class="btn" id="songPreview">🔊 Dinle</button>
+      <button type="button" class="btn primary" id="songSave">Kaydet</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="resultDlg">
+  <div class="dlg result">
+    <div class="stars" id="resStars"></div>
+    <div class="score"><span id="resScore">0</span><small>/100</small></div>
+    <h2 id="resTitle"></h2>
+    <div class="muted" id="resSub"></div>
+    <div class="chips wrap" id="resChips"></div>
+    <menu>
+      <button class="btn" id="resClose">Kapat</button>
+      <button class="btn primary" id="resAgain">↻ Tekrar dene</button>
+    </menu>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="js/pitch.js"></script>
+<script src="js/music.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
