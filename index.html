@@ -32,6 +32,7 @@
       <svg class="gauge" id="gauge" viewBox="0 0 300 168" aria-hidden="true"></svg>
       <div class="readout"><span id="readLeft">— Hz</span><span id="readRight">— ¢</span></div>
       <div class="hint" id="hint">Mikrofonu başlat</div>
+      <button type="button" class="margin-pill" id="marginPill" title="Hata payını değiştir"></button>
     </div>
 
     <div class="card side-card tuner-only">
@@ -127,17 +128,20 @@
 <dialog id="settingsDlg">
   <form method="dialog" class="dlg">
     <h2>Ayarlar</h2>
+    <div class="field margin-box">
+      <label class="check"><input type="checkbox" id="setMargin"><span>Hata payı <small class="muted">— notaya yakın çalman da doğru sayılır, kısa titremeler affedilir</small></span></label>
+      <label class="field" id="marginField">
+        <span>Ne kadar: <output id="tolOut"></output></span>
+        <input type="range" id="setTol" min="15" max="50" step="5">
+      </label>
+      <small class="muted">Kapalıyken notayı tam tutturman gerekir (±10 cent). 100 cent = yarım ton; ±50'den fazlası komşu notayı da doğru saymak olacağı için sınır 50.</small>
+    </div>
     <label class="field">
       <span>Nota isimleri</span>
       <select id="setNaming">
         <option value="solfege">Do Re Mi</option>
         <option value="letter">C D E</option>
       </select>
-    </label>
-    <label class="field">
-      <span>Tolerans: ±<output id="tolOut"></output> cent</span>
-      <input type="range" id="setTol" min="10" max="50" step="5">
-      <small class="muted">Doğru sayılmak için notaya ne kadar yakın olman gerektiği (100 cent = yarım ton). Başlangıç için 25–35 iyidir.</small>
     </label>
     <label class="field">
       <span>Tutma süresi: <output id="holdOut"></output> ms</span>

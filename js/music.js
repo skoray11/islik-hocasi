@@ -130,6 +130,28 @@
         'E5 E5 E5:2 E5 E5 E5:2 | E5 G5 C5:1.5 D5:0.5 E5:4 | ' +
         'F5 F5 F5 F5 F5 E5 E5 E5:0.5 E5:0.5 | G5 G5 F5 D5 C5:4',
     },
+    // Brahms, Macar Dansı No. 5 (2/4). Orijinali Fa♯ minör; ıslık aralığı için La minöre taşındı.
+    // Asıl tempo ~136 BPM.
+    {
+      id: 'macar5', group: 'Klasik', title: 'Macar Dansı No. 5 — ana tema (Brahms)', bpm: 80,
+      text:
+        'E5:1.5 A5:0.5 | C6:1.5 A5:0.5 | G#5:1.5 A5:0.25 B5:0.25 | A5:2 | ' +
+        'F5:1.5 G5:0.25 A5:0.25 | E5:2 | D5:0.25 C5:0.25 C5:0.25 B4:0.25 B4:0.75 E5:0.25 | A4:2 | ' +
+        'E5:1.5 A5:0.25 C6:0.25 | E6:1.5 C6:0.5 | B5:1.5 C6:0.25 D6:0.25 | C6:2 | ' +
+        'F5:0.25 G5:0.25 A5:0.25 F5:0.25 E5:0.25 F5:0.25 G5:0.25 E5:0.25 | ' +
+        'D5:0.25 E5:0.25 F5:0.25 D5:0.25 C5:0.25 D5:0.25 E5:0.25 C5:0.25 | ' +
+        'D5:0.25 C5:0.25 C5:0.25 B4:0.25 B4:0.75 E5:0.25 | A4:2',
+    },
+    {
+      id: 'macar5b', group: 'Klasik', title: 'Macar Dansı No. 5 — ikinci tema (Brahms)', bpm: 80,
+      text:
+        'E6:0.5 -:0.5 E6:0.5 -:0.5 | F6:1.5 E6:0.5 | -:0.5 D6 C#6:0.25 D6:0.25 | ' +
+        'E6:0.25 D6:0.25 C#6:0.25 E6:0.25 D6:0.5 -:0.5 | ' +
+        'D6:0.5 -:0.5 D6:0.5 -:0.5 | E6:1.5 D6:0.5 | -:0.5 C6 B5:0.25 C6:0.25 | ' +
+        'D6:0.25 C6:0.25 B5:0.25 D6:0.25 C6:0.5 -:0.5 | ' +
+        'B5:0.5 -:0.5 B5:0.5 -:0.5 | D6:0.25 -:0.25 C6:0.5 -:0.5 B5:0.75 -:0.25 | ' +
+        'A5:0.5 -:0.5 G#5:0.25 A5:0.25 | B5:0.25 A5:0.25 G#5:0.25 B5:0.25 A5',
+    },
   ];
 
   const api = { SOLFEGE, LETTERS, SONGS, freqToMidi, midiToFreq, noteParts, noteLabel, isBlackKey, parseSong };

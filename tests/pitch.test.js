@@ -89,4 +89,18 @@ for (const sr of [44100, 48000]) {
   console.log('✓ ayrıştırıcı');
 }
 
+// 7) Hazır şarkıların hepsi hatasız ayrışmalı; Macar Dansı ölçüleri tam (2/4 → ölçü başına 2 vuruş).
+{
+  const { SONGS } = require('../js/music.js');
+  for (const s of SONGS) {
+    const { notes, errors } = parseSong(s.text);
+    assert.deepStrictEqual(errors, [], `${s.id}: ${errors}`);
+    assert(notes.some((n) => n.midi != null), `${s.id}: nota yok`);
+  }
+  const beats = (id) => parseSong(SONGS.find((s) => s.id === id).text).notes.reduce((a, n) => a + n.beats, 0);
+  assert.strictEqual(beats('macar5'), 32);
+  assert.strictEqual(beats('macar5b'), 24);
+  console.log(`✓ ${SONGS.length} hazır şarkı`);
+}
+
 console.log('Tüm testler geçti.');

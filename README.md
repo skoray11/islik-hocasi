@@ -25,7 +25,7 @@ Kısayollar: **Boşluk** başla/durdur, **N** notayı dinle.
 
 ## Ayarlar
 
-Tolerans (kaç cent sapma doğru sayılır), tutma süresi, mikrofon eşiği, “oktav fark etmesin”, nota isimleri (Do Re Mi / C D E) ve A4 referansı ayarlanabilir. Ayarlar, kendi şarkıların ve en iyi puanların tarayıcıda saklanır.
+**Hata payı** (açık/kapalı; açıkken Az/Orta/Bol: notaya ne kadar yakın çalmanın doğru sayılacağı — ana ekrandaki “Hata payı” yazısına dokunarak da değiştirilebilir), tutma süresi, mikrofon eşiği, “oktav fark etmesin”, nota isimleri (Do Re Mi / C D E) ve A4 referansı ayarlanabilir. Ayarlar, kendi şarkıların ve en iyi puanların tarayıcıda saklanır.
 
 ## Geliştirme
 

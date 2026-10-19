@@ -158,6 +158,12 @@ body[data-mode="song"] .meter-card[data-state="idle"] .note-big { color: var(--t
 .meter-card[data-state="good"] .hint { color: var(--good); }
 .meter-card[data-state="near"] .hint { color: var(--near); }
 .meter-card[data-state="off"] .hint { color: var(--off); }
+.margin-pill {
+  appearance: none; border: 1px solid var(--line); background: transparent; color: var(--muted);
+  font: inherit; font-size: 12.5px; font-weight: 700; padding: 4px 12px; border-radius: 999px; cursor: pointer;
+}
+.margin-pill:hover { border-color: var(--accent); color: var(--text); }
+.margin-pill.strict { color: var(--near); border-color: color-mix(in srgb, var(--near) 45%, transparent); }
 
 /* --- yan kart --- */
 .side-card { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
@@ -270,6 +276,8 @@ dialog::backdrop { background: rgb(0 0 0 / .55); backdrop-filter: blur(3px); }
 .check { display: flex; gap: 10px; align-items: flex-start; font-weight: 600; font-size: 14px; cursor: pointer; }
 .check input { margin-top: 3px; accent-color: var(--accent); }
 .help { font-size: 13px; line-height: 1.6; }
+.margin-box { padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel-2); }
+#marginField.disabled { opacity: .45; }
 .parse-out { font-size: 13px; font-weight: 600; min-height: 1.3em; }
 .parse-out.bad { color: var(--off); }
 .parse-out.ok { color: var(--good); }

@@ -36,7 +36,8 @@
 
   const DEFAULTS = {
     naming: 'solfege',
-    tolerance: 25,
+    margin: true, // hata payı açık mı
+    tolerance: 35, // hata payı açıkken izin verilen sapma (cent)
     holdMs: 400,
     gateDb: -50,
     octaveFree: true,
@@ -46,6 +47,7 @@
     a4: 440,
   };
   const settings = Object.assign({}, DEFAULTS, store.get('settings', {}));
+  settings.tolerance = Math.max(15, Math.min(50, settings.tolerance));
   let range = store.get('range', null); // { lo, hi } midi
   let customSongs = store.get('songs', []);
   const best = store.get('best', {}); // "şarkı:mod" → puan
@@ -74,7 +76,7 @@
     songDlg: $('songDlg'), songName: $('songName'), songText: $('songText'), songBpm: $('songBpm'),
     parseOut: $('parseOut'), songPreview: $('songPreview'), songSave: $('songSave'),
     resultDlg: $('resultDlg'), resStars: $('resStars'), resScore: $('resScore'), resTitle: $('resTitle'),
-    resSub: $('resSub'), resChips: $('resChips'), resClose: $('resClose'), resAgain: $('resAgain'),
+    marginPill: $('marginPill'), resSub: $('resSub'), resChips: $('resChips'), resClose: $('resClose'), resAgain: $('resAgain'),
     toast: $('toast'),
   };
 
@@ -97,9 +99,21 @@
     return d * 100;
   }
 
+  const STRICT_CENTS = 10; // hata payı kapalıyken: notayı tam tutturmak gerekir
+
+  /** Doğru sayılmak için izin verilen sapma (cent). */
+  function tolerance() {
+    return settings.margin ? settings.tolerance : STRICT_CENTS;
+  }
+
+  function marginLevel(t) {
+    return t <= 20 ? 'Az' : t <= 35 ? 'Orta' : 'Bol';
+  }
+
   function category(cents) {
     const a = Math.abs(cents);
-    return a <= settings.tolerance ? 'good' : a <= settings.tolerance * 2 ? 'near' : 'off';
+    const tol = tolerance();
+    return a <= tol ? 'good' : a <= tol * 2 ? 'near' : 'off';
   }
 
   const scoreClass = (score) => (score >= 80 ? 'good' : score >= 50 ? 'near' : 'off');
@@ -447,12 +461,13 @@
       return;
     }
     const dev = deviation(pitch.midi, n.midi);
+    const tol = tolerance();
     if (s.needRelease) {
       // Aynı nota tekrar ediyor: ses kısılmadan/kesilmeden ikinci notayı sayma.
-      if (raw.rms < s.peakRms * 0.5 || Math.abs(dev) > settings.tolerance * 2) s.needRelease = false;
+      if (raw.rms < s.peakRms * 0.5 || Math.abs(dev) > tol * 2) s.needRelease = false;
       else return;
     }
-    if (Math.abs(dev) <= settings.tolerance) {
+    if (Math.abs(dev) <= tol) {
       if (s.holdStart == null) {
         s.holdStart = now;
         s.devs = [];
@@ -462,7 +477,8 @@
       s.devs.push(Math.abs(dev));
       s.peakRms = Math.max(s.peakRms, raw.rms);
       if (now - s.holdStart >= settings.holdMs / 1000) stepSuccess(now);
-    } else if (s.holdStart != null && now - s.lastGood > 0.12) {
+    } else if (s.holdStart != null && now - s.lastGood > (settings.margin ? 0.25 : 0.1)) {
+      // Hata payı açıkken kısa kaymalar tutma süresini sıfırlamaz.
       s.holdStart = null;
     }
   }
@@ -470,7 +486,7 @@
   function stepSuccess(now) {
     const s = session;
     const n = s.notes[s.i];
-    n.score = Math.round(100 - (50 * mean(s.devs)) / settings.tolerance);
+    n.score = Math.round(100 - (50 * mean(s.devs)) / tolerance());
     n.end = now - LATENCY;
     chipState(n, scoreClass(n.score));
     pulse();
@@ -507,7 +523,7 @@
     // Notanın ilk anı (atak) puanlanmaz.
     if (tf < n.start + Math.min(0.12, (n.end - n.start) * 0.25)) return;
     n.total++;
-    if (pitch.voiced && Math.abs(deviation(pitch.midi, n.midi)) <= settings.tolerance) n.hit++;
+    if (pitch.voiced && Math.abs(deviation(pitch.midi, n.midi)) <= tolerance()) n.hit++;
   }
 
   function finishSession(now) {
@@ -653,7 +669,7 @@
       const [x2, y2] = pt(c2, r);
       return `M${x1} ${y1} A${r} ${r} 0 0 1 ${x2} ${y2}`;
     };
-    const tol = settings.tolerance;
+    const tol = tolerance();
     const near = Math.min(50, tol * 2);
     const zones = [[-50, -near, 'off'], [-near, -tol, 'near'], [-tol, tol, 'good'], [tol, near, 'near'], [near, 50, 'off']];
     let svg = '';
@@ -675,6 +691,13 @@
     svg += `<g class="needle"><line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy - r + 18}"/><circle cx="${cx}" cy="${cy}" r="7"/></g>`;
     el.gauge.innerHTML = svg;
     needleEl = el.gauge.querySelector('.needle');
+  }
+
+  function renderMarginPill() {
+    el.marginPill.textContent = settings.margin
+      ? `Hata payı: ${marginLevel(settings.tolerance)} (±${settings.tolerance}¢)`
+      : 'Hata payı: kapalı (tam nota)';
+    el.marginPill.classList.toggle('strict', !settings.margin);
   }
 
   function pulse() {
@@ -761,7 +784,7 @@
       return session ? `${label(target.midi)} notasını ıslıkla` : 'Başla’ya bas ya da ilk notayı dene';
     }
     const a = Math.abs(cents);
-    if (a <= settings.tolerance) return session && session.kind === 'step' ? 'Güzel, tut…' : 'Tam isabet ✓';
+    if (a <= tolerance()) return session && session.kind === 'step' ? 'Güzel, tut…' : 'Tam isabet ✓';
     const dir = cents < 0 ? 'yükselt ▲' : 'alçalt ▼';
     if (a < 100) return 'Biraz ' + dir;
     return `${Math.round(a / 100)} yarım ton ${dir}`;
@@ -864,7 +887,7 @@
     const cur = segs.find((s) => s.state === 'current');
     if (cur) {
       // Hedef notanın tolerans bandı
-      const band = settings.tolerance / 100;
+      const band = tolerance() / 100;
       const y1 = yOf(cur.n.midi + band);
       c.globalAlpha = 0.12;
       c.fillStyle = colors.accent;
@@ -1040,13 +1063,14 @@
   }
 
   const S = {
-    naming: $('setNaming'), tol: $('setTol'), tolOut: $('tolOut'), hold: $('setHold'), holdOut: $('holdOut'),
+    naming: $('setNaming'), margin: $('setMargin'), marginField: $('marginField'), tol: $('setTol'), tolOut: $('tolOut'), hold: $('setHold'), holdOut: $('holdOut'),
     gate: $('setGate'), gateOut: $('gateOut'), octave: $('setOctave'), headphones: $('setHeadphones'),
     refBefore: $('setRefBefore'), accompany: $('setAccompany'), a4: $('setA4'),
   };
 
   function fillSettingsForm() {
     S.naming.value = settings.naming;
+    S.margin.checked = settings.margin;
     S.tol.value = settings.tolerance;
     S.hold.value = settings.holdMs;
     S.gate.value = settings.gateDb;
@@ -1059,7 +1083,9 @@
   }
 
   function renderSettingsOutputs() {
-    S.tolOut.textContent = settings.tolerance;
+    S.tolOut.textContent = `${marginLevel(settings.tolerance)} · ±${settings.tolerance} cent`;
+    S.tol.disabled = !settings.margin;
+    S.marginField.classList.toggle('disabled', !settings.margin);
     S.holdOut.textContent = settings.holdMs;
     S.gateOut.textContent = settings.gateDb;
     S.accompany.disabled = !settings.headphones;
@@ -1067,6 +1093,7 @@
 
   function onSettingsInput() {
     settings.naming = S.naming.value;
+    settings.margin = S.margin.checked;
     settings.tolerance = +S.tol.value;
     settings.holdMs = +S.hold.value;
     settings.gateDb = +S.gate.value;
@@ -1079,6 +1106,7 @@
     if (settings.headphones) muteUntil = 0;
     store.set('settings', settings);
     renderSettingsOutputs();
+    renderMarginPill();
     buildGauge();
     renderGate();
     relabel();
@@ -1210,10 +1238,12 @@
   el.listenBtn.addEventListener('click', togglePreview);
   el.refBtn.addEventListener('click', playCurrentRef);
 
-  el.settingsBtn.addEventListener('click', () => {
+  function openSettings() {
     fillSettingsForm();
     el.settingsDlg.showModal();
-  });
+  }
+  el.settingsBtn.addEventListener('click', openSettings);
+  el.marginPill.addEventListener('click', openSettings);
   el.settingsDlg.addEventListener('input', onSettingsInput);
   el.settingsDlg.addEventListener('change', onSettingsInput);
 
@@ -1272,6 +1302,7 @@
   resizeRoll();
   buildGauge();
   renderGate();
+  renderMarginPill();
   renderRange();
   fillSongSelect();
   selectSong(currentSong().id);
